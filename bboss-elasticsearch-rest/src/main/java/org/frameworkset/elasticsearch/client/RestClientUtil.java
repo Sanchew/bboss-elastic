@@ -258,6 +258,31 @@ public class RestClientUtil extends ClientUtil{
 	public String addDocuments(String indexName, String indexType, List<?> beans) throws ElasticSearchException{
 		return addDocuments(indexName, indexType,  beans,null);
 	}
+
+	@Override
+	public String addDocumentsWithDocIdKey(String indexName, String indexType, List<?> beans, String docIdKey) throws ElasticSearchException {
+		return addDocumentsWithDocIdKey(indexName, indexType, beans, docIdKey, null);
+	}
+
+	public String addDocumentsWithDocIdKey(String indexName, String indexType, List<?> beans, String docIdKey, String refreshOption) throws ElasticSearchException {
+		if(beans == null || beans.size() == 0)
+			return null;
+		StringBuilder builder = new StringBuilder();
+		BBossStringWriter writer = new BBossStringWriter(builder);
+		for(Object bean:beans) {
+			try {
+				BuildTool.evalBuilk(writer,indexName,indexType,bean, docIdKey,"index");
+			} catch (IOException e) {
+				throw new ElasticSearchException(e);
+			}
+		}
+		writer.flush();
+		if(refreshOption == null)
+			return this.client.executeHttp("_bulk",builder.toString(),ClientUtil.HTTP_POST);
+		else
+			return this.client.executeHttp("_bulk?"+refreshOption,builder.toString(),ClientUtil.HTTP_POST);
+	}
+
 	public String addDocuments(String indexName, String indexType,  List<?> beans,String refreshOption) throws ElasticSearchException{
 		if(beans == null || beans.size() == 0)
 			return null;
@@ -384,6 +409,25 @@ public class RestClientUtil extends ClientUtil{
 	 */
 	public String addDocument(String indexName, String indexType, Object bean) throws ElasticSearchException{
 		return this.addDocument(indexName,indexType,bean,null);
+	}
+
+	@Override
+	public String addDocumentWithDocIdKey(String indexName, String indexType, Object bean, String docIdKey, String refreshOption) throws ElasticSearchException {
+		ClassUtil.ClassInfo beanInfo = ClassUtil.getClassInfo(bean.getClass());
+		Object id = null;
+		if (docIdKey != null) {
+		    id = beanInfo.getPropertyValue(bean, docIdKey);
+		}else {
+			id = BuildTool.getId(bean,beanInfo);
+		}
+		Object parentId = BuildTool.getParentId(bean,beanInfo);
+
+		return addDocument(indexName, indexType, bean,id,parentId,refreshOption);
+	}
+
+	@Override
+	public String addDocumentWithDocIdKey(String indexName, String indexType, Object bean, String docIdKey) throws ElasticSearchException {
+		return addDocumentWithDocIdKey(indexName, indexType, bean, docIdKey, null);
 	}
 
 

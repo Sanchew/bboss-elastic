@@ -180,6 +180,22 @@ public abstract class BuildTool {
 		}
 	}
 
+	public static void buildMeta(Writer writer , String indexType,String indexName, Object params, String docIdKey, String action) throws IOException {
+		ClassUtil.ClassInfo beanInfo = ClassUtil.getClassInfo(params.getClass());
+		Object id = null;
+		if (docIdKey == null) {
+			id = getId(params, beanInfo);
+		}else {
+			id = beanInfo.getPropertyValue(params, docIdKey);
+		}
+		Object parentId = getParentId(params,beanInfo);
+		Object routing = getRouting(params,beanInfo);
+		Object esRetryOnConflict = getEsRetryOnConflict(params,beanInfo);
+
+
+		buildMeta(  writer ,  indexType,  indexName,   params,  action,  id,  parentId,routing,esRetryOnConflict);
+	}
+
 	public static void buildMeta(Writer writer ,String indexType,String indexName, Object params,String action) throws IOException {
 		ClassUtil.ClassInfo beanInfo = ClassUtil.getClassInfo(params.getClass());
 		Object id = getId(params,beanInfo);
@@ -308,6 +324,46 @@ public abstract class BuildTool {
 			writer.write("\" } }\n");
 		}
 	}
+
+	public static void evalBuilk( Writer writer, String indexName, String indexType, Object param, String docIdKey, String action) throws IOException {
+		if (param != null) {
+			buildMeta(  writer ,  indexType,  indexName,   param, docIdKey, action);
+			if(!action.equals("update")) {
+				SerialUtil.object2json(param,writer);
+				writer.write("\n");
+			}
+			else
+			{
+				ClassUtil.ClassInfo classInfo = ClassUtil.getClassInfo(param.getClass());
+				ClassUtil.PropertieDescription esDocAsUpsertProperty = classInfo.getEsDocAsUpsertProperty();
+
+
+				ClassUtil.PropertieDescription esReturnSourceProperty = classInfo.getEsReturnSourceProperty();
+
+				writer.write("{\"doc\":");
+				SerialUtil.object2json(param,writer);
+				if(esDocAsUpsertProperty != null){
+					Object esDocAsUpsert = classInfo.getPropertyValue(param,esDocAsUpsertProperty.getName());
+					if(esDocAsUpsert != null){
+						writer.write(",\"doc_as_upsert\":");
+						writer.write(String.valueOf(esDocAsUpsert));
+					}
+				}
+				if(esReturnSourceProperty != null){
+					Object returnSource = classInfo.getPropertyValue(param,esReturnSourceProperty.getName());
+					if(returnSource != null){
+						writer.write(",\"_source\":");
+						writer.write(String.valueOf(returnSource));
+					}
+				}
+				writer.write("}\n");
+
+
+
+			}
+		}
+	}
+
 	public static void evalBuilk( Writer writer,String indexName, String indexType, Object param, String action) throws IOException {
 
 

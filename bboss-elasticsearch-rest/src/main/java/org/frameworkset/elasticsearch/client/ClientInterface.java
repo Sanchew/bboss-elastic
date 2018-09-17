@@ -368,6 +368,8 @@ public interface ClientInterface {
 	 */
 	public abstract String addDocuments(String indexName, String indexType, List<?> beans,String refreshOption) throws ElasticSearchException;
 	public abstract String addDocuments(String indexName, String indexType,  List<?> beans) throws ElasticSearchException;
+	public abstract String addDocumentsWithDocIdKey(String indexName, String indexType,  List<?> beans, String docIdKey) throws ElasticSearchException;
+	public abstract String addDocumentsWithDocIdKey(String indexName, String indexType,  List<?> beans, String docIdKey, String refreshOption) throws ElasticSearchException;
 
 
 	/**
@@ -379,6 +381,8 @@ public interface ClientInterface {
 	 * @throws ElasticSearchException
 	 */
 	public abstract String addDocument(String indexName, String indexType, Object bean) throws ElasticSearchException;
+	public abstract String addDocumentWithDocIdKey(String indexName, String indexType, Object bean, String docIdKey) throws ElasticSearchException;
+	public abstract String addDocumentWithDocIdKey(String indexName, String indexType, Object bean, String docIdKey, String refreshOption) throws ElasticSearchException;
 
 	/**
 	 * 创建或者更新索引文档
